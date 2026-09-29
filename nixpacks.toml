@@ -1,30 +1,10 @@
 # Railway Nixpacks config for Laravel 12 + PHP 8.2
-# Docs: https://nixpacks.com/docs/providers/php
-
-[phases.setup]
-nixPkgs = [
-  "php82",
-  "php82Packages.composer",
-  "php82Extensions.pdo",
-  "php82Extensions.pdo_mysql",
-  "php82Extensions.mbstring",
-  "php82Extensions.xml",
-  "php82Extensions.curl",
-  "php82Extensions.zip",
-  "php82Extensions.gd",
-  "php82Extensions.fileinfo",
-  "php82Extensions.tokenizer",
-  "php82Extensions.ctype",
-  "php82Extensions.openssl",
-  "php82Extensions.bcmath",
-  "nodejs_20",
-  "nodePackages.npm"
-]
+# Let Nixpacks auto-detect PHP + composer, only override what we need.
 
 [phases.install]
 cmds = [
   "composer install --no-dev --optimize-autoloader --no-interaction --no-progress",
-  "npm ci --prefer-offline",
+  "npm ci",
   "npm run build"
 ]
 
