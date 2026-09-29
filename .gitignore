@@ -13,6 +13,7 @@
 /.zed
 /auth.json
 /node_modules
+/package-lock.json
 /public/build
 /public/hot
 /public/storage
@@ -22,3 +23,7 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+__pycache__/
+*.pyc
+debug-*.log
+*.log

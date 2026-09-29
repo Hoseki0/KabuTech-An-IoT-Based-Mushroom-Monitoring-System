@@ -1,5 +1,8 @@
 # Railway Nixpacks config for Laravel 12 + PHP 8.2
-# Let Nixpacks auto-detect PHP + composer, only override what we need.
+# Let Nixpacks auto-detect PHP + composer, pin Node 20 for Vite compatibility.
+
+[variables]
+NODE_VERSION = "20"
 
 [phases.install]
 cmds = [
