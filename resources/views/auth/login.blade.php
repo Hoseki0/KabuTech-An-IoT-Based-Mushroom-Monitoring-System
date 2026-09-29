@@ -16,11 +16,11 @@
         @csrf
         <div class="mb-3">
             <label for="email" class="form-label">Email</label>
-            <input type="email" name="email" id="email" value="{{ old('email') }}" class="form-control bg-dark text-white border-secondary" required autofocus autocomplete="username">
+            <input type="email" name="email" id="email" value="{{ old('email') }}" class="form-control" required autofocus autocomplete="username">
         </div>
         <div class="mb-3">
             <label for="password" class="form-label">Password</label>
-            <input type="password" name="password" id="password" class="form-control bg-dark text-white border-secondary" required autocomplete="current-password">
+            <input type="password" name="password" id="password" class="form-control" required autocomplete="current-password">
         </div>
         <div class="d-flex align-items-center justify-content-between mb-3">
             <div class="form-check mb-0">

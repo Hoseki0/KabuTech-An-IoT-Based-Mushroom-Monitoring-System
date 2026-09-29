@@ -49,6 +49,9 @@ const char* PING_URL          = "/api/ping";
 // Relay pin (HIGH = relay energised = misting ON)
 #define RELAY_PIN 5
 
+// Fan relay pin (HIGH = fan ON) — connect a 5V relay IN pin here
+#define FAN_RELAY_PIN 18
+
 // Send sensor reading every 5 seconds
 const uint32_t UPDATE_INTERVAL_MS = 5000;
 
@@ -100,6 +103,20 @@ static bool  serverTargetsValid = false;
 // ---------------------------------------------------------------------------
 bool     mistingStatus   = false;
 bool     autoIncubation  = false;  // false=fruiting, true=incubation
+
+// ---------------------------------------------------------------------------
+// FAN STATE
+// ---------------------------------------------------------------------------
+bool     fanStatus       = false;
+bool     fanAutoMode     = true;   // true=auto (ESP32 decides), false=manual
+bool     fanServerDesiredOn = false; // manual command from dashboard
+
+// FAE (Fresh Air Exchange) — auto interval cycling
+// During fruiting, run fan for FAE_BURST_MS every FAE_INTERVAL_MS
+const uint32_t FAE_BURST_MS    = 2UL * 60UL * 1000UL;  // 2 minutes on
+const uint32_t FAE_INTERVAL_MS = 15UL * 60UL * 1000UL; // every 15 minutes
+static uint32_t fanLastCycleStartMs = 0;
+static uint32_t fanBurstUntilMs     = 0;
 
 const char* mistingSource = "auto";
 const char* mistingReason = "";
@@ -294,6 +311,7 @@ static bool postSensorData(float temperature, float humidity, bool misting) {
   doc["temperature"]        = temperature;
   doc["humidity"]           = humidity;
   doc["misting_system"]     = misting;
+  doc["fan_system"]         = fanStatus;
   doc["wifi_rssi"]          = WiFi.RSSI();
   doc["misting_source"]     = mistingSource;
   doc["misting_reason"]     = mistingReason;
@@ -386,6 +404,13 @@ static bool pollMistingStatus(bool* outOn, bool* outIsAuto) {
       serverHumMin  = hmin;
       serverTargetsValid = true;
     }
+  }
+
+  // Fan override from /api/misting/status
+  if (doc.containsKey("fan_desired_on"))  fanServerDesiredOn = doc["fan_desired_on"].as<bool>();
+  if (doc.containsKey("fan_desired_mode")) {
+    const char* fm = doc["fan_desired_mode"].as<const char*>();
+    fanAutoMode = !(fm && strcmp(fm, "manual") == 0);
   }
 
   return true;
@@ -533,7 +558,13 @@ void setup() {
   // --- Relay ---
   pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, LOW);
-  Serial.println("  ✓ Relay (GPIO 5) initialised — OFF\n");
+  Serial.println("  ✓ Relay (GPIO 5) initialised — OFF");
+
+  // --- Fan relay ---
+  pinMode(FAN_RELAY_PIN, OUTPUT);
+  digitalWrite(FAN_RELAY_PIN, LOW);
+  fanLastCycleStartMs = millis(); // start FAE cycle timer now
+  Serial.println("  ✓ Fan relay (GPIO 18) initialised — OFF\n");
 
   // --- Wi-Fi + OTA ---
   connectWiFiWithPortal();
@@ -607,7 +638,57 @@ void loop() {
     handleAutoMisting(temperature, humidity, now);
   }
 
-  Serial.printf("[STATUS] Misting: %s  |  Source: %s\n",
-                mistingStatus ? "ON" : "OFF", mistingSource);
+  // --- Apply fan ---
+  if (!fanAutoMode) {
+    // MANUAL fan override from dashboard
+    if (fanServerDesiredOn != fanStatus) {
+      fanStatus = fanServerDesiredOn;
+      digitalWrite(FAN_RELAY_PIN, fanStatus ? HIGH : LOW);
+      delay(200); // settle after relay toggle
+      Serial.printf("  [FAN MANUAL] -> %s\n", fanStatus ? "ON" : "OFF");
+    }
+  } else {
+    // AUTO fan: FAE interval cycling + temperature override
+    const MushroomProfile& p = activeProfile();
+    float tempMax = serverTargetsValid ? serverTempMax :
+                    (autoIncubation ? p.inc_temp_max : p.temp_max);
+    bool tooHotForFan = (temperature > tempMax);
+
+    if (tooHotForFan) {
+      // Keep fan running continuously while overtemp
+      if (!fanStatus) {
+        fanStatus = true;
+        digitalWrite(FAN_RELAY_PIN, HIGH);
+        delay(200);
+        Serial.printf("  [FAN AUTO] ON — temp %.1f°C > max %.1f°C\n", temperature, tempMax);
+      }
+      // Reset FAE cycle so it doesn't cut off mid-cooling
+      fanLastCycleStartMs = now;
+      fanBurstUntilMs     = 0;
+    } else {
+      // FAE interval cycling
+      if (fanBurstUntilMs > 0 && now >= fanBurstUntilMs) {
+        // Burst finished — turn off, reset cycle timer
+        fanStatus = false;
+        digitalWrite(FAN_RELAY_PIN, LOW);
+        delay(200);
+        fanBurstUntilMs     = 0;
+        fanLastCycleStartMs = now;
+        Serial.println("  [FAN AUTO] FAE burst complete — OFF");
+      } else if (fanBurstUntilMs == 0 && (now - fanLastCycleStartMs) >= FAE_INTERVAL_MS) {
+        // Time for another FAE burst
+        fanStatus = true;
+        digitalWrite(FAN_RELAY_PIN, HIGH);
+        delay(200);
+        fanBurstUntilMs = now + FAE_BURST_MS;
+        Serial.printf("  [FAN AUTO] FAE burst started — ON for %lu s\n", FAE_BURST_MS / 1000);
+      }
+    }
+  }
+
+  Serial.printf("[STATUS] Misting: %s  |  Fan: %s  |  Source: %s\n",
+                mistingStatus ? "ON" : "OFF",
+                fanStatus     ? "ON" : "OFF",
+                mistingSource);
   Serial.println("----------------------------------------\n");
 }

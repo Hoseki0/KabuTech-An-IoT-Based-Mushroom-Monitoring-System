@@ -20,7 +20,7 @@
         <div class="mb-3">
             <label for="email_display" class="form-label">Email</label>
             <input type="email" id="email_display" value="{{ $email }}"
-                   class="form-control bg-dark text-white border-secondary"
+                   class="form-control"
                    readonly disabled>
         </div>
 
@@ -28,7 +28,7 @@
             <label for="password" class="form-label">New password</label>
             <div class="input-group">
                 <input type="password" name="password" id="password"
-                       class="form-control bg-dark text-white border-secondary"
+                       class="form-control"
                        required autocomplete="new-password"
                        placeholder="At least 8 characters">
                 <button class="btn btn-outline-secondary" type="button" id="togglePassword"
@@ -41,7 +41,7 @@
         <div class="mb-4">
             <label for="password_confirmation" class="form-label">Confirm new password</label>
             <input type="password" name="password_confirmation" id="password_confirmation"
-                   class="form-control bg-dark text-white border-secondary"
+                   class="form-control"
                    required autocomplete="new-password"
                    placeholder="Repeat your password">
         </div>

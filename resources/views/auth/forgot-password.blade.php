@@ -21,7 +21,7 @@
         <div class="mb-3">
             <label for="email" class="form-label">Email address</label>
             <input type="email" name="email" id="email" value="{{ old('email') }}"
-                   class="form-control bg-dark text-white border-secondary"
+                   class="form-control"
                    required autofocus autocomplete="email"
                    placeholder="you@example.com">
         </div>

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class SensorData extends Model
 {
     protected $fillable = [
+        'box_id',
         'temperature',
         'humidity',
         'wifi_rssi',
@@ -15,6 +16,7 @@ class SensorData extends Model
         'misting_reason',
         'misting_total_ms',
         'misting_last_burst_ms',
+        'fan_system',
         'recorded_at',
     ];
 
@@ -22,6 +24,7 @@ class SensorData extends Model
         'temperature' => 'decimal:2',
         'humidity' => 'decimal:2',
         'misting_system' => 'boolean',
+        'fan_system' => 'boolean',
         'recorded_at' => 'datetime',
     ];
 }

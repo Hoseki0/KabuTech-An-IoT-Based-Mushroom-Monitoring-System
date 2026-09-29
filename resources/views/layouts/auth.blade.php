@@ -15,7 +15,7 @@
 <body class="auth-layout d-flex align-items-center min-vh-100 py-4">
 <div class="container" style="max-width: 420px;">
     <div class="text-center mb-4">
-        <h1 class="h4 text-white">KABUTECH</h1>
+        <h1 class="h4">KABUTECH</h1>
         <p class="text-muted small mb-0">Mushroom Monitoring System</p>
     </div>
     <div class="card glass-card border-0 shadow">

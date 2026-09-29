@@ -39,9 +39,4 @@ class User extends Authenticatable
     {
         return (bool) $this->is_verified;
     }
-
-    public function feedbacks(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(\App\Models\UserFeedback::class);
-    }
 }

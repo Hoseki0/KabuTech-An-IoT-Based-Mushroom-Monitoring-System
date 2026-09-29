@@ -12,22 +12,23 @@
     <link rel="stylesheet" href="{{ $base }}/vendor/fontawesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ $base }}/css/dashboard.css">
     <style>
-        .badge-verified   { background: rgba(34,197,94,0.25); color:#86efac; border:1px solid rgba(34,197,94,0.4); }
-        .badge-pending    { background: rgba(234,179,8,0.2);  color:#fde047; border:1px solid rgba(234,179,8,0.35); }
-        .btn-verify-on    { border-color:#22c55e; color:#86efac; }
-        .btn-verify-on:hover { background:rgba(34,197,94,0.15); color:#86efac; }
-        .btn-verify-off   { border-color:#fde047; color:#fde047; }
-        .btn-verify-off:hover { background:rgba(234,179,8,0.1); color:#fde047; }
+        .badge-verified   { background: #dcfce7; color:#15803d; border:1px solid #bbf7d0; }
+        .badge-pending    { background: #fef9c3; color:#a16207; border:1px solid #fde047; }
+        .btn-verify-on    { border-color:#16a34a; color:#15803d; }
+        .btn-verify-on:hover { background:#dcfce7; color:#15803d; }
+        .btn-verify-off   { border-color:#eab308; color:#a16207; }
+        .btn-verify-off:hover { background:#fef9c3; color:#a16207; }
     </style>
 </head>
 <body>
-<nav class="navbar navbar-dark navbar-expand-lg mb-4">
+<nav class="navbar navbar-light navbar-expand-lg mb-4">
     <div class="container-fluid">
         <span class="navbar-brand"><i class="fas fa-user-shield me-2"></i>Admin Panel</span>
         <div class="navbar-nav ms-auto flex-row flex-wrap gap-2 align-items-center">
+            <a class="nav-link" href="{{ route('dashboard') }}"><i class="fas fa-gauge-high me-1"></i>Mushroom Dashboard</a>
             <a class="nav-link active" href="{{ route('admin.index') }}"><i class="fas fa-users me-1"></i>Users</a>
-            <a class="nav-link" href="{{ route('admin.feedback.index') }}"><i class="fas fa-comments me-1"></i>Feedback</a>
-            <form method="post" action="{{ route('logout') }}" class="d-inline">@csrf<button type="submit" class="btn btn-sm btn-outline-light">Logout</button></form>
+            <a class="nav-link" href="{{ route('admin.retention.index') }}"><i class="fas fa-database me-1"></i>Retention</a>
+            <form method="post" action="{{ route('logout') }}" class="d-inline">@csrf<button type="submit" class="btn btn-sm btn-outline-secondary">Logout</button></form>
         </div>
     </div>
 </nav>
@@ -47,7 +48,7 @@
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-dark table-hover mb-0 align-middle">
+                <table class="table table-hover mb-0 align-middle">
                     <thead>
                         <tr>
                             <th>ID</th>

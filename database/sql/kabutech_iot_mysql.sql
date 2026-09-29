@@ -13,9 +13,12 @@ CREATE DATABASE IF NOT EXISTS `kabutech_iot`
 USE `kabutech_iot`;
 
 -- Every POST /api/sensor-data from the ESP32 inserts one row (all fields the device sends).
+-- box_id identifies which physical incubator box the sensor belongs to (e.g. 'box_a', 'box_b', 'box_c').
+-- Legacy rows with box_id = NULL are treated as box_a.
 DROP TABLE IF EXISTS `sensor_data`;
 CREATE TABLE `sensor_data` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `box_id` varchar(32) DEFAULT NULL COMMENT 'Identifies which incubator box: box_a / box_b / box_c. NULL = box_a (legacy)',
   `temperature` decimal(5,2) DEFAULT NULL,
   `humidity` decimal(5,2) DEFAULT NULL,
   `misting_system` tinyint(1) NOT NULL DEFAULT 0,
@@ -28,6 +31,7 @@ CREATE TABLE `sensor_data` (
   `misting_total_ms` bigint unsigned DEFAULT NULL,
   `misting_last_burst_ms` int unsigned DEFAULT NULL,
   PRIMARY KEY (`id`),
+  KEY `sensor_data_box_id_index` (`box_id`),
   KEY `sensor_data_recorded_at_index` (`recorded_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
