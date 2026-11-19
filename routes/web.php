@@ -11,6 +11,7 @@ use App\Http\Controllers\BoxSettingController;
 use App\Http\Controllers\DiagnosticController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\HarvestController;
+use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\RetentionController;
 use App\Http\Controllers\SystemNotificationController;
 
@@ -42,6 +43,10 @@ Route::middleware('auth.any')->group(function () {
 
     Route::get('/api/grow-settings', [GrowSettingsController::class, 'show']);
     Route::put('/api/grow-settings', [GrowSettingsController::class, 'update']);
+
+    // Machine Learning Prediction API
+    Route::get('/api/prediction/harvest',       [GrowSettingsController::class, 'getHarvestPrediction']);
+    Route::get('/api/prediction/model-metrics', [GrowSettingsController::class, 'getModelMetrics']);
 
     // Harvest & Yield Tracking API
     Route::get('/api/harvest-logs',        [HarvestController::class, 'index']);
@@ -78,6 +83,12 @@ Route::middleware('auth.any')->group(function () {
     Route::post('/api/notifications/{id}/read',  [SystemNotificationController::class, 'markRead'])->whereNumber('id');
     Route::post('/api/notifications/read-all',   [SystemNotificationController::class, 'markAllRead']);
 
+    // Web Push Subscriptions API
+    Route::get('/api/push/vapid-key',    [PushSubscriptionController::class, 'vapidPublicKey']);
+    Route::post('/api/push/subscribe',   [PushSubscriptionController::class, 'store']);
+    Route::post('/api/push/unsubscribe', [PushSubscriptionController::class, 'destroy']);
+    Route::post('/api/push/test',        [PushSubscriptionController::class, 'sendTest']);
+
     Route::middleware('admin')->group(function () {
         Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
         Route::patch('/admin/users/{user}/verify', [AdminController::class, 'verify'])->name('admin.users.verify');
@@ -87,6 +98,10 @@ Route::middleware('auth.any')->group(function () {
         Route::get('/admin/retention',        [RetentionController::class, 'index'])->name('admin.retention.index');
         Route::post('/admin/retention',       [RetentionController::class, 'update'])->name('admin.retention.update');
         Route::post('/admin/retention/prune', [RetentionController::class, 'prune'])->name('admin.retention.prune');
+
+        // Farm & Hardware Inventory (Admin Panel)
+        Route::post('/admin/inventory',        [AdminController::class, 'storeInventory'])->name('admin.inventory.store');
+        Route::delete('/admin/inventory/{id}', [AdminController::class, 'destroyInventory'])->name('admin.inventory.destroy');
     });
 
 });

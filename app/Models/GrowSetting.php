@@ -32,7 +32,7 @@ class GrowSetting extends Model
 
         return static::query()->create([
             'id' => 1,
-            'mushroom_type' => 'oyster_mushroom',
+            'mushroom_type' => \App\Services\MushroomSpeciesCatalog::defaultKey(),
             'incubation_started_at' => null,
             'fruiting_started_at' => null,
         ]);

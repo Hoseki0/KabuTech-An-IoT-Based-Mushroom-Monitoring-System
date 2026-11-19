@@ -116,6 +116,136 @@
             {{ $users->links() }}
         </div>
     </div>
+
+    {{-- Harvested Mushroom Inventory Section --}}
+    <div class="card glass-card mt-4 mb-5" id="admin-inventory">
+        <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div>
+                <span class="fw-semibold"><i class="fas fa-seedling me-2 text-success"></i>Harvested Mushroom Inventory</span>
+                <small class="text-muted ms-2">({{ $inventorySummary['count'] ?? 0 }} harvests — {{ $inventorySummary['total_kg'] ?? 0 }} kg total)</small>
+            </div>
+            <button class="btn btn-sm btn-success" type="button" data-bs-toggle="collapse" data-bs-target="#addAdminInventoryCollapse" aria-expanded="false" aria-controls="addAdminInventoryCollapse">
+                <i class="fas fa-plus me-1"></i>Add Harvested Mushroom
+            </button>
+        </div>
+
+        {{-- Harvested Stock Summary Bar --}}
+        <div class="card-body border-bottom border-secondary py-2">
+            <div class="row g-2 text-center">
+                <div class="col-md-4 col-6">
+                    <div class="p-2 rounded border border-secondary">
+                        <div class="small text-muted">White Oyster Harvested</div>
+                        <div class="fw-bold text-success">{{ $inventorySummary['white_kg'] ?? 0 }} kg <small class="text-muted">({{ $inventorySummary['white_grams'] ?? 0 }} g)</small></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-6">
+                    <div class="p-2 rounded border border-secondary">
+                        <div class="small text-muted">Brown Oyster Harvested</div>
+                        <div class="fw-bold text-warning">{{ $inventorySummary['brown_kg'] ?? 0 }} kg <small class="text-muted">({{ $inventorySummary['brown_grams'] ?? 0 }} g)</small></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-12">
+                    <div class="p-2 rounded border border-secondary">
+                        <div class="small text-muted">Total Harvested Stock</div>
+                        <div class="fw-bold">{{ $inventorySummary['total_kg'] ?? 0 }} kg <small class="text-muted">({{ $inventorySummary['total_grams'] ?? 0 }} g)</small></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="collapse border-bottom border-secondary" id="addAdminInventoryCollapse">
+            <div class="card-body">
+                <form method="post" action="{{ route('admin.inventory.store') }}" class="row g-2 align-items-end">
+                    @csrf
+                    <div class="col-md-3 col-sm-6">
+                        <label class="form-label small mb-1">Harvested Mushroom</label>
+                        <select name="mushroom_type" class="form-select form-select-sm" required>
+                            <option value="oyster_white">White Oyster Mushroom</option>
+                            <option value="oyster_brown">Brown Oyster Mushroom</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <label class="form-label small mb-1">Batch / Flush Label</label>
+                        <input type="text" name="batch_name" class="form-control form-control-sm" placeholder="e.g. Box A Harvest (4 bags)" required>
+                    </div>
+                    <div class="col-md-1 col-4">
+                        <label class="form-label small mb-1">Flush #</label>
+                        <input type="number" name="flush_number" min="1" max="10" value="1" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="col-md-2 col-4">
+                        <label class="form-label small mb-1">Harvest Weight</label>
+                        <input type="number" name="qty" step="0.1" min="0.1" placeholder="e.g. 1850" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="col-md-1 col-4">
+                        <label class="form-label small mb-1">Unit</label>
+                        <select name="unit" class="form-select form-select-sm" required>
+                            <option value="g">g</option>
+                            <option value="kg">kg</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1 col-6">
+                        <label class="form-label small mb-1">Grade</label>
+                        <select name="quality" class="form-select form-select-sm">
+                            <option value="Grade A">Grade A</option>
+                            <option value="Grade B">Grade B</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1 col-6">
+                        <button type="submit" class="btn btn-sm btn-success w-100"><i class="fas fa-check"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th>Harvested Mushroom</th>
+                            <th>Batch</th>
+                            <th>Flush</th>
+                            <th>Harvested Weight</th>
+                            <th>Quality</th>
+                            <th>Harvest Date</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($harvestInventory ?? [] as $item)
+                            <tr>
+                                <td class="fw-semibold">
+                                    @if ($item->mushroom_type === 'oyster_brown')
+                                        <span class="badge rounded-pill bg-warning bg-opacity-10 text-warning px-3 py-1">Brown Oyster Mushroom</span>
+                                    @else
+                                        <span class="badge rounded-pill bg-success bg-opacity-10 text-success px-3 py-1">White Oyster Mushroom</span>
+                                    @endif
+                                </td>
+                                <td>{{ $item->batch_name }}</td>
+                                <td>Flush {{ $item->flush_number }}</td>
+                                <td class="fw-semibold">{{ number_format((float) $item->weight_grams, 1) }} g <small class="text-muted">({{ number_format((float) $item->weight_grams / 1000, 2) }} kg)</small></td>
+                                <td><span class="badge bg-secondary bg-opacity-25 text-light">{{ $item->quality ?? 'Grade A' }}</span></td>
+                                <td class="small text-muted">{{ $item->harvested_at ? $item->harvested_at->format('M d, Y') : '' }}</td>
+                                <td class="text-end">
+                                    <form method="post" action="{{ route('admin.inventory.destroy', $item->id) }}" class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remove this harvested mushroom entry?')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-3">No harvested mushrooms in inventory yet.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 <script src="{{ $base }}/vendor/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
 </body>

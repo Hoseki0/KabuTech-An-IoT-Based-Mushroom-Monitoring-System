@@ -65,7 +65,7 @@ class CameraController extends Controller
         }
 
         $client = new Client([
-            'connect_timeout' => 3,
+            'connect_timeout' => 1.5,
             'timeout' => 0.0,
             'http_errors' => false,
             'stream' => true,
@@ -134,8 +134,8 @@ class CameraController extends Controller
         }
 
         $client = new Client([
-            'connect_timeout' => 3,
-            'timeout' => 5,
+            'connect_timeout' => 1.5,
+            'timeout' => 2.5,
             'http_errors' => false,
         ]);
 
@@ -217,8 +217,8 @@ class CameraController extends Controller
         }
 
         $client = new Client([
-            'connect_timeout' => 3,
-            'timeout' => 5,
+            'connect_timeout' => 1.5,
+            'timeout' => 2.5,
             'http_errors' => false,
         ]);
 

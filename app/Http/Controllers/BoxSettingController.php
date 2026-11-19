@@ -28,7 +28,7 @@ class BoxSettingController extends Controller
                 $result[$boxId] = [
                     'box_id'        => $boxId,
                     'name'          => $defaultName,
-                    'mushroom_type' => 'oyster_mushroom',
+                    'mushroom_type' => \App\Services\MushroomSpeciesCatalog::defaultKey(),
                     'stage'         => 'fruiting',
                     'temp_min'      => 20.00,
                     'temp_max'      => 28.00,
@@ -68,7 +68,7 @@ class BoxSettingController extends Controller
             ['box_id' => strtolower(str_replace(' ', '_', $validated['box_id']))],
             [
                 'name'          => $validated['name'],
-                'mushroom_type' => $validated['mushroom_type'] ?? 'oyster_mushroom',
+                'mushroom_type' => \App\Services\MushroomSpeciesCatalog::normalizeKey($validated['mushroom_type'] ?? null),
                 'stage'         => $validated['stage'] ?? 'fruiting',
                 'temp_min'      => $validated['temp_min'] ?? null,
                 'temp_max'      => $validated['temp_max'] ?? null,

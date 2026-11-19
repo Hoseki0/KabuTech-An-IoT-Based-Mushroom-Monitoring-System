@@ -9,5 +9,8 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
+// Check IoT hardware health every minute and notify users about problems
+Schedule::command(\App\Console\Commands\CheckDeviceHealth::class)->everyMinute()->withoutOverlapping();
+
 // Auto-prune old sensor data every day at 02:00
 Schedule::command(PruneSensorData::class)->dailyAt('02:00')->withoutOverlapping();

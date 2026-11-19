@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset Your Password — KABUTECH</title>
+    <title>Reset Your Password — Fiona's Mushroom Farm</title>
 </head>
 <body style="margin:0;padding:0;background:#0f172a;font-family:'Segoe UI',Arial,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f172a;padding:40px 16px;">
@@ -14,8 +14,8 @@
                 {{-- Header --}}
                 <tr>
                     <td align="center" style="padding-bottom:28px;">
-                        <div style="font-size:22px;font-weight:700;color:#e2e8f0;letter-spacing:2px;">🍄 KABUTECH</div>
-                        <div style="font-size:12px;color:#64748b;margin-top:4px;">Mushroom Monitoring System</div>
+                        <div style="font-size:22px;font-weight:700;color:#e2e8f0;letter-spacing:1px;">🍄 Fiona's Mushroom Farm</div>
+                        <div style="font-size:12px;color:#64748b;margin-top:4px;">Automated Mushroom System</div>
                     </td>
                 </tr>
 
@@ -26,7 +26,7 @@
                         <p style="margin:0 0 8px;font-size:20px;font-weight:600;color:#e2e8f0;">Password Reset Request</p>
                         <p style="margin:0 0 24px;font-size:14px;color:#94a3b8;line-height:1.6;">
                             Hi <strong style="color:#e2e8f0;">{{ $user->name }}</strong>,<br>
-                            We received a request to reset the password for your KABUTECH account.
+                            We received a request to reset the password for your Fiona's Mushroom Farm account.
                             Click the button below to choose a new password.
                         </p>
 
@@ -60,7 +60,7 @@
                 <tr>
                     <td align="center" style="padding-top:24px;">
                         <p style="margin:0;font-size:12px;color:#334155;">
-                            © {{ date('Y') }} KABUTECH · Automated Mushroom Monitoring System
+                            © {{ date('Y') }} Fiona's Mushroom Farm · Automated Mushroom System
                         </p>
                     </td>
                 </tr>

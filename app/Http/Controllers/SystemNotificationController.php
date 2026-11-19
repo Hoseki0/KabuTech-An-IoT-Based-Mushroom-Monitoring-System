@@ -3,13 +3,23 @@
 namespace App\Http\Controllers;
 
 use App\Models\SystemNotification;
+use App\Services\DeviceHealthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class SystemNotificationController extends Controller
 {
     public function index(): JsonResponse
     {
+        try {
+            if (Cache::add('device_health:last_poll_check', true, 60)) {
+                app(DeviceHealthService::class)->check(includeCamera: false);
+            }
+        } catch (\Throwable $e) {
+            // Never break notification polling if a health check fails
+        }
+
         $items = SystemNotification::query()
             ->orderByDesc('created_at')
             ->limit(40)

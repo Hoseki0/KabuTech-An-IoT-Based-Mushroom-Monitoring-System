@@ -21,7 +21,10 @@
 #include "esp32-hal-ledc.h"
 #include "sdkconfig.h"
 #include "camera_index.h"
-// We no longer include board_config.h here; the main sketch defines LED_GPIO_NUM if needed.
+// Define onboard flash LED pin (GPIO 4 on AI Thinker ESP32-CAM) for this translation unit
+#ifndef LED_GPIO_NUM
+#define LED_GPIO_NUM 4
+#endif
 
 #if defined(ARDUINO_ARCH_ESP32) && defined(CONFIG_ARDUHAL_ESP_LOG)
 #include "esp32-hal-log.h"
@@ -29,7 +32,7 @@
 
 // LED FLASH setup
 #if defined(LED_GPIO_NUM)
-#define CONFIG_LED_MAX_INTENSITY 255
+#define CONFIG_LED_MAX_INTENSITY 150
 
 int led_duty = 0;
 bool isStreaming = false;
@@ -90,15 +93,18 @@ static int ra_filter_run(ra_filter_t *filter, int value) {
 #endif
 
 #if defined(LED_GPIO_NUM)
+#define LEDC_FLASH_CHANNEL 7
 void enable_led(bool en) { // Turn LED On or Off
- int duty = en ? led_duty : 0;
- if (en && isStreaming && (led_duty > CONFIG_LED_MAX_INTENSITY)) {
- duty = CONFIG_LED_MAX_INTENSITY;
- }
- ledcWrite(LED_GPIO_NUM, duty);
- //ledc_set_duty(CONFIG_LED_LEDC_SPEED_MODE, CONFIG_LED_LEDC_CHANNEL, duty);
- //ledc_update_duty(CONFIG_LED_LEDC_SPEED_MODE, CONFIG_LED_LEDC_CHANNEL);
- log_i("Set LED intensity to %d", duty);
+  int duty = en ? led_duty : 0;
+  if (en && isStreaming && (led_duty > CONFIG_LED_MAX_INTENSITY)) {
+    duty = CONFIG_LED_MAX_INTENSITY;
+  }
+#if defined(ESP_ARDUINO_VERSION_MAJOR) && ESP_ARDUINO_VERSION_MAJOR >= 3
+  ledcWrite(LED_GPIO_NUM, duty);
+#else
+  ledcWrite(LEDC_FLASH_CHANNEL, duty);
+#endif
+  log_i("Set LED intensity to %d", duty);
 }
 #endif
 
@@ -162,12 +168,16 @@ static esp_err_t capture_handler(httpd_req_t *req) {
 #endif
 
 #if defined(LED_GPIO_NUM)
- enable_led(true);
- vTaskDelay(150 / portTICK_PERIOD_MS); // The LED needs to be turned on ~150ms before the call to esp_camera_fb_get()
- fb = esp_camera_fb_get(); // or it won't be visible in the frame. A better way to do this is needed.
- enable_led(false);
+  if (led_duty > 0) {
+    enable_led(true);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+  }
+  fb = esp_camera_fb_get();
+  if (led_duty > 0) {
+    enable_led(false);
+  }
 #else
- fb = esp_camera_fb_get();
+  fb = esp_camera_fb_get();
 #endif
 
  if (!fb) {
@@ -227,12 +237,16 @@ static esp_err_t stream_handler(httpd_req_t *req) {
  return res;
  }
 
- httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
- httpd_resp_set_hdr(req, "X-Framerate", "60");
+  httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+  httpd_resp_set_hdr(req, "Cache-Control", "no-cache, no-store, must-revalidate");
+  httpd_resp_set_hdr(req, "Pragma", "no-cache");
+  httpd_resp_set_hdr(req, "X-Framerate", "60");
 
 #if defined(LED_GPIO_NUM)
- isStreaming = true;
- enable_led(true);
+  isStreaming = true;
+  if (led_duty > 0) {
+    enable_led(true);
+  }
 #endif
 
  while (true) {
@@ -274,11 +288,13 @@ static esp_err_t stream_handler(httpd_req_t *req) {
  free(_jpg_buf);
  _jpg_buf = NULL;
  }
- if (res != ESP_OK) {
- log_e("Send frame failed");
- break;
- }
- int64_t fr_end = esp_timer_get_time();
+  if (res != ESP_OK) {
+    log_e("Send frame failed");
+    break;
+  }
+  // Delay 40ms to stabilize USB power rail and cap temperatures
+  vTaskDelay(pdMS_TO_TICKS(40));
+  int64_t fr_end = esp_timer_get_time();
 
  int64_t frame_time = fr_end - last_frame;
  last_frame = fr_end;
@@ -396,9 +412,7 @@ static esp_err_t cmd_handler(httpd_req_t *req) {
 #if defined(LED_GPIO_NUM)
  else if (!strcmp(variable, "led_intensity")) {
  led_duty = val;
- if (isStreaming) {
- enable_led(true);
- }
+ enable_led(led_duty > 0);
  }
 #endif
  else {
@@ -426,34 +440,12 @@ static esp_err_t status_handler(httpd_req_t *req) {
  char *end = json_response + sizeof(json_response);
  *p++ = '{';
 
- if (s->id.PID == OV5640_PID || s->id.PID == OV3660_PID) {
- for (int reg = 0x3400; reg < 0x3406; reg += 2) {
- p += print_reg(p, end, s, reg, 0xFFF); //12 bit
- }
- p += print_reg(p, end, s, 0x3406, 0xFF);
-
- p += print_reg(p, end, s, 0x3500, 0xFFFF0); //16 bit
- p += print_reg(p, end, s, 0x3503, 0xFF);
- p += print_reg(p, end, s, 0x350a, 0x3FF); //10 bit
- p += print_reg(p, end, s, 0x350c, 0xFFFF); //16 bit
-
- for (int reg = 0x5480; reg <= 0x5490; reg++) {
- p += print_reg(p, end, s, reg, 0xFF);
- }
-
- for (int reg = 0x5380; reg <= 0x538b; reg++) {
- p += print_reg(p, end, s, reg, 0xFF);
- }
-
- for (int reg = 0x5580; reg < 0x558a; reg++) {
- p += print_reg(p, end, s, reg, 0xFF);
- }
- p += print_reg(p, end, s, 0x558a, 0x1FF); //9 bit
- } else if (s->id.PID == OV2640_PID) {
- p += print_reg(p, end, s, 0xd3, 0xFF);
- p += print_reg(p, end, s, 0x111, 0xFF);
- p += print_reg(p, end, s, 0x132, 0xFF);
- }
+  // For OV2640, avoid raw hardware register reads (0xd3) which cause SCCB_Read timeout ret:259
+  if (s->id.PID == OV5640_PID || s->id.PID == OV3660_PID) {
+    for (int reg = 0x3400; reg < 0x3406; reg += 2) {
+      p += print_reg(p, end, s, reg, 0xFFF);
+    }
+  }
 
  p += snprintf(p, end - p, "\"xclk\":%u,", s->xclk_freq_hz / 1000000);
  p += snprintf(p, end - p, "\"pixformat\":%u,", s->pixformat);
@@ -828,6 +820,7 @@ void startCameraServer() {
  httpd_register_uri_handler(camera_httpd, &status_uri);
  httpd_register_uri_handler(camera_httpd, &capture_uri);
  httpd_register_uri_handler(camera_httpd, &bmp_uri);
+ httpd_register_uri_handler(camera_httpd, &stream_uri); // Available on port 80
 
  httpd_register_uri_handler(camera_httpd, &xclk_uri);
  httpd_register_uri_handler(camera_httpd, &reg_uri);
@@ -846,8 +839,13 @@ void startCameraServer() {
 
 void setupLedFlash() {
 #if defined(LED_GPIO_NUM)
- ledcAttach(LED_GPIO_NUM, 5000, 8);
+#if defined(ESP_ARDUINO_VERSION_MAJOR) && ESP_ARDUINO_VERSION_MAJOR >= 3
+  ledcAttach(LED_GPIO_NUM, 5000, 8);
 #else
- log_i("LED flash is disabled -> LED_GPIO_NUM undefined");
+  ledcSetup(LEDC_FLASH_CHANNEL, 5000, 8);
+  ledcAttachPin(LED_GPIO_NUM, LEDC_FLASH_CHANNEL);
+#endif
+#else
+  log_i("LED flash is disabled -> LED_GPIO_NUM undefined");
 #endif
 }

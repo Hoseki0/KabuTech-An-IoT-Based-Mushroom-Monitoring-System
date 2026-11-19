@@ -15,6 +15,8 @@ class HarvestLog extends Model
         'weight_grams',
         'substrate_weight_grams',
         'biological_efficiency',
+        'temperature',
+        'humidity',
         'quality',
         'notes',
         'harvested_at',
@@ -25,6 +27,8 @@ class HarvestLog extends Model
         'weight_grams' => 'float',
         'substrate_weight_grams' => 'float',
         'biological_efficiency' => 'float',
+        'temperature' => 'float',
+        'humidity' => 'float',
         'harvested_at' => 'datetime',
     ];
 }

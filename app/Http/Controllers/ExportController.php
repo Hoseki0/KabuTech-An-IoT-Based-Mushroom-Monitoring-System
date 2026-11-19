@@ -103,13 +103,21 @@ class ExportController extends Controller
                 'Harvest Weight (g)',
                 'Substrate Weight (g)',
                 'Biological Efficiency (%)',
-                'Quality Grade',
+                'Batch Avg Temp (°C)',
+                'Batch Avg Humidity (%)',
+                'Best Temp Target (°C)',
+                'Best Humidity Target (%)',
                 'Notes',
                 'Harvested At'
             ]);
 
             $query->chunk(500, function ($rows) use ($handle) {
                 foreach ($rows as $row) {
+                    $profile = \App\Services\MushroomSpeciesCatalog::profile($row->mushroom_type)
+                        ?? \App\Services\MushroomSpeciesCatalog::profile(\App\Services\MushroomSpeciesCatalog::defaultKey());
+                    $bestTempStr = $profile ? "{$profile['temp_min']} - {$profile['temp_max']} °C" : '20 - 26 °C';
+                    $bestHumStr  = $profile ? "{$profile['hum_min']} - {$profile['hum_max']} %" : '85 - 95 %';
+
                     fputcsv($handle, [
                         $row->id,
                         $row->batch_id,
@@ -120,7 +128,10 @@ class ExportController extends Controller
                         $row->weight_grams,
                         $row->substrate_weight_grams,
                         $row->biological_efficiency,
-                        $row->quality,
+                        $row->temperature !== null ? $row->temperature : '--',
+                        $row->humidity !== null ? $row->humidity : '--',
+                        $bestTempStr,
+                        $bestHumStr,
                         $row->notes,
                         $row->harvested_at ? $row->harvested_at : ''
                     ]);
@@ -151,8 +162,12 @@ class ExportController extends Controller
                 $avgQuery->where('box_id', $boxId);
             }
 
-            $avgTemp = round($avgQuery->avg('temperature') ?? 0, 2);
-            $avgHum  = round($avgQuery->avg('humidity') ?? 0, 2);
+            $avgTemp = $harvest->temperature !== null
+                ? round((float) $harvest->temperature, 1)
+                : round((float) ($avgQuery->avg('temperature') ?? 24.0), 1);
+            $avgHum  = $harvest->humidity !== null
+                ? round((float) $harvest->humidity, 1)
+                : round((float) ($avgQuery->avg('humidity') ?? 88.0), 1);
 
             return [
                 'harvest_id'      => $harvest->id,
@@ -160,6 +175,8 @@ class ExportController extends Controller
                 'mushroom_type'   => $harvest->mushroom_type,
                 'flush_number'    => $harvest->flush_number,
                 'weight_grams'    => (float) $harvest->weight_grams,
+                'temperature'     => $avgTemp,
+                'humidity'        => $avgHum,
                 'harvested_at'    => $harvestDate->toDateString(),
                 'avg_temp_7d'     => $avgTemp,
                 'avg_hum_7d'      => $avgHum,

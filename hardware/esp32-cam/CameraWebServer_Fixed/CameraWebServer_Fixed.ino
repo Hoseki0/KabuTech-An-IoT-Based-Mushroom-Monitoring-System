@@ -23,7 +23,12 @@
 void startCameraServer();
 void setupLedFlash();
 
-// Same Wi-Fi UX as thesis-ui/esp32/esp32.ino — saved credentials, auto-reconnect.
+// Enter your Wi-Fi name & password below for INSTANT direct connection.
+// If left empty (""), it will use the WiFiManager captive portal "KABUTECH-ESP32CAM-SETUP".
+const char* WIFI_SSID     = "Converge_2.4GHz_7JcC";  // e.g. "Your_WiFi_Name"
+const char* WIFI_PASSWORD = "tAt6ZPVW";  // e.g. "Your_WiFi_Password"
+
+// Same Wi-Fi UX as thesis-ui/hardware/esp32/esp32.ino — saved credentials, auto-reconnect.
 static WiFiManager wifiPortal;
 
 #ifndef WIFI_CLEAR_PIN
@@ -35,15 +40,15 @@ static void maybeClearSavedWiFi() {
   Serial.println();
   Serial.println("--- Wi-Fi (ESP32-CAM) ---");
   Serial.println("To FORCE setup AP \"KABUTECH-ESP32CAM-SETUP\": HOLD BOOT ~3s.");
-  Serial.println("Otherwise: use saved Wi-Fi (same network as your main ESP32 is fine).");
+  Serial.println("Otherwise: connecting to saved Wi-Fi...");
   Serial.println();
 
   uint32_t heldMs = 0;
-  const uint32_t tEnd = millis() + 6000;
+  const uint32_t tEnd = millis() + 4000;
   while (millis() < tEnd) {
     if (digitalRead(WIFI_CLEAR_PIN) == LOW) {
       heldMs += 50;
-      if (heldMs >= 2800) {
+      if (heldMs >= 2500) {
         Serial.println("Clearing saved Wi-Fi...");
         wifiPortal.resetSettings();
         delay(400);
@@ -57,13 +62,33 @@ static void maybeClearSavedWiFi() {
 }
 
 static void connectWiFiWithPortal() {
-  maybeClearSavedWiFi();
-
   WiFi.mode(WIFI_STA);
   WiFi.setSleep(false);
 #if defined(ESP32)
-  WiFi.setTxPower(WIFI_POWER_19_5dBm);
+  WiFi.setTxPower(WIFI_POWER_11dBm); // 11dBm cuts current spikes in half for laptop USB ports
 #endif
+
+  // If hardcoded SSID is provided, connect directly:
+  if (strlen(WIFI_SSID) > 0) {
+    Serial.printf("Connecting directly to Wi-Fi: %s ...\n", WIFI_SSID);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    uint32_t tStart = millis();
+    while (WiFi.status() != WL_CONNECTED && (millis() - tStart) < 20000) {
+      delay(300);
+      Serial.print(".");
+    }
+    Serial.println();
+    if (WiFi.status() == WL_CONNECTED) {
+      Serial.println("Wi-Fi connected successfully (Direct mode)");
+      Serial.print("IP address: ");
+      Serial.println(WiFi.localIP());
+      return;
+    }
+    Serial.println("Direct connection failed. Falling back to WiFiManager...");
+  }
+
+  maybeClearSavedWiFi();
+
   wifiPortal.setConfigPortalTimeout(600);
   wifiPortal.setConnectTimeout(30);
 #if defined(ESP32)
@@ -143,20 +168,17 @@ void setup() {
     int pclk;
   };
 
-  // Pinmaps taken from common Espressif Arduino examples.
-  // We try multiple because clones/OV3660 modules often differ from AI Thinker.
+  // Pinmaps for AI Thinker ESP32-CAM and TY-OV2640-V1.0 module
   static const CamPins PINMAPS[] = {
-      // AI Thinker ESP32-CAM (common; often OV2640, but some ship with OV3660)
-      {"AI_THINKER", 32, -1, 0, 26, 27, 5, 18, 19, 21, 36, 39, 34, 35, 25, 23, 22},
-      // AI Thinker variant without PWDN wired (some clones)
+      // AI Thinker ESP32-CAM with TY-OV2640-V1.0 (standard 24-pin FPC)
+      {"AI_THINKER (TY-OV2640-V1.0)", 32, -1, 0, 26, 27, 5, 18, 19, 21, 36, 39, 34, 35, 25, 23, 22},
+      // AI Thinker clone without PWDN control
       {"AI_THINKER_NO_PWDN", -1, -1, 0, 26, 27, 5, 18, 19, 21, 36, 39, 34, 35, 25, 23, 22},
-      // M5Stack PSRAM (often OV3660/OV2640 depending module)
+      // M5Stack PSRAM
       {"M5STACK_PSRAM", -1, 15, 27, 25, 23, 17, 35, 34, 5, 39, 18, 36, 19, 22, 26, 21},
-      // M5Stack WITHOUT PSRAM
-      {"M5STACK_NO_PSRAM", -1, 15, 27, 25, 23, 17, 35, 34, 5, 39, 18, 36, 19, 22, 26, 21},
   };
 
-  auto makeConfig = [](const CamPins& p) {
+  auto makeConfig = [](const CamPins& p, int xclk_freq) {
     camera_config_t c;
     c.ledc_channel = LEDC_CHANNEL_0;
     c.ledc_timer = LEDC_TIMER_0;
@@ -176,67 +198,91 @@ void setup() {
     c.pin_sccb_scl = p.scl;
     c.pin_pwdn = p.pwdn;
     c.pin_reset = p.reset;
-    c.xclk_freq_hz = 20000000;
+    c.xclk_freq_hz = xclk_freq;
     c.pixel_format = PIXFORMAT_JPEG;
-    c.frame_size = FRAMESIZE_UXGA;
-    c.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
+    c.frame_size = FRAMESIZE_QVGA;  // 320x240 - low power draw, rock-solid on laptop USB
+    c.grab_mode = CAMERA_GRAB_LATEST;
     c.fb_location = psramFound() ? CAMERA_FB_IN_PSRAM : CAMERA_FB_IN_DRAM;
-    c.jpeg_quality = 12;
-    c.fb_count = psramFound() ? 2 : 1;
-    if (!psramFound()) {
-      c.frame_size = FRAMESIZE_SVGA;
-    }
+    c.jpeg_quality = 16;            // Lower payload avoids voltage droop on USB ports
+    c.fb_count = 1;                 // Single buffer is safer for low current USB supplies
     return c;
   };
 
   esp_err_t err = ESP_FAIL;
   camera_config_t config{};
   const char* selected = nullptr;
+  // 10MHz is the most stable clock for TY-OV2640-V1.0 (eliminates SCCB ret:259 timeouts)
+  int frequencies[] = {10000000, 20000000};
 
-  for (size_t i = 0; i < (sizeof(PINMAPS) / sizeof(PINMAPS[0])); i++) {
-    const CamPins& p = PINMAPS[i];
-    Serial.printf("\n[camera] Trying pinmap: %s\n", p.name);
+  for (int freq : frequencies) {
+    for (size_t i = 0; i < (sizeof(PINMAPS) / sizeof(PINMAPS[0])); i++) {
+      const CamPins& p = PINMAPS[i];
+      Serial.printf("\n[camera] Trying: %s @ %d MHz\n", p.name, freq / 1000000);
 
-    // Ensure clean deinit between tries
-    esp_camera_deinit();
+      // Clean deinit between attempts
+      esp_camera_deinit();
 
-    if (p.pwdn >= 0) {
-      pinMode(p.pwdn, OUTPUT);
-      digitalWrite(p.pwdn, LOW);
-      delay(120);
+      // Configure SCCB pullups so I2C lines don't float during Wi-Fi bursts
+      if (p.sda >= 0) pinMode(p.sda, INPUT_PULLUP);
+      if (p.scl >= 0) pinMode(p.scl, INPUT_PULLUP);
+
+      if (p.pwdn >= 0) {
+        pinMode(p.pwdn, OUTPUT);
+        digitalWrite(p.pwdn, HIGH);  // Reset pulse
+        delay(10);
+        digitalWrite(p.pwdn, LOW);   // Active LOW wakes TY-OV2640-V1.0
+        delay(120);
+      }
+
+      config = makeConfig(p, freq);
+      err = esp_camera_init(&config);
+      if (err == ESP_OK) {
+        selected = p.name;
+        break;
+      }
+      Serial.printf("[camera] init failed (0x%x) on %s\n", (unsigned)err, p.name);
+      delay(100);
     }
-
-    config = makeConfig(p);
-    err = esp_camera_init(&config);
-    if (err == ESP_OK) {
-      selected = p.name;
-      break;
-    }
-    Serial.printf("[camera] init failed with 0x%x on %s\n", (unsigned)err, p.name);
-    delay(150);
+    if (err == ESP_OK) break;
   }
 
   if (err != ESP_OK) {
-    Serial.printf("\n*** CAMERA INIT FAILED on all pinmaps. Last error: 0x%x ***\n", (unsigned)err);
-    Serial.println("This usually means one of:");
-    Serial.println("  • Power issue (use stable 5V supply, ideally 2A, into 5V pin)");
-    Serial.println("  • Camera ribbon not seated / wrong orientation");
-    Serial.println("  • Board pinmap not in this list (tell me your board name)");
+    Serial.printf("\n*** CAMERA INIT FAILED (Error: 0x%x) ***\n", (unsigned)err);
+    Serial.println("For TY-OV2640-V1.0 module:");
+    Serial.println("  1. Check ribbon: Gold pins MUST face DOWN toward the PCB.");
+    Serial.println("  2. Press ribbon latch firmly to secure connection.");
+    Serial.println("  3. Ensure 5V power supply provides at least 1.5A to 2A.");
     Serial.println("Halting.");
     while (true) delay(1000);
   }
 
-  Serial.printf("\n[camera] OK using pinmap: %s\n", selected ? selected : "(unknown)");
+  Serial.printf("\n[camera] TY-OV2640-V1.0 ready! Using: %s\n", selected ? selected : "AI_THINKER");
 
   sensor_t* s = esp_camera_sensor_get(); 
-  if (s->id.PID == OV3660_PID) {
-    s->set_vflip(s, 1);
-    s->set_brightness(s, 1);
-    s->set_saturation(s, -2);
-  }
-  if (config.pixel_format == PIXFORMAT_JPEG) {
-    s->set_framesize(s, FRAMESIZE_QVGA);   // 320x240 = higher FPS for smooth stream
-    s->set_quality(s, 14);                  // Slightly lower quality = smaller frames = smoother
+  if (s != nullptr) {
+    if (s->id.PID == OV2640_PID) {
+      Serial.println("[camera] OmniVision OV2640 sensor detected and calibrated.");
+      s->set_brightness(s, 0);     // Normal brightness
+      s->set_contrast(s, 0);       // Normal contrast
+      s->set_saturation(s, 0);     // Normal saturation
+      s->set_whitebal(s, 1);       // Auto White Balance Enabled
+      s->set_awb_gain(s, 1);       // Auto White Balance Gain Enabled
+      s->set_wb_mode(s, 0);        // Auto WB
+      s->set_exposure_ctrl(s, 1);  // Auto Exposure Enabled
+      s->set_gain_ctrl(s, 1);      // Auto Gain Enabled
+      s->set_bpc(s, 1);            // Black point correction
+      s->set_wpc(s, 1);            // White point correction
+      s->set_raw_gma(s, 1);        // Gamma correction
+      s->set_lenc(s, 1);           // Lens correction
+    } else if (s->id.PID == OV3660_PID) {
+      s->set_vflip(s, 1);
+      s->set_brightness(s, 1);
+      s->set_saturation(s, -2);
+    }
+    if (config.pixel_format == PIXFORMAT_JPEG) {
+      s->set_framesize(s, FRAMESIZE_QVGA); // 320x240 - low power USB mode
+      s->set_quality(s, 16);
+    }
   }
 
 #if defined(LED_GPIO_NUM)

@@ -6,10 +6,14 @@
     RewriteEngine On
 
     # Cache static assets (images, css, js) for 1 week - faster repeat loads
+    # Never long-cache sw.js so service worker updates apply immediately
     <IfModule mod_headers.c>
         <FilesMatch "\.(ico|png|jpe?g|gif|webp|css|js|woff2?)$">
             Header set Cache-Control "public, max-age=604800"
         </FilesMatch>
+        <Files "sw.js">
+            Header set Cache-Control "no-cache, no-store, must-revalidate"
+        </Files>
     </IfModule>
 
     # Handle Authorization Header

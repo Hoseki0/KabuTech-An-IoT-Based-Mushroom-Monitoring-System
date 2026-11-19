@@ -91,6 +91,12 @@ final class GrowAlertService
             'body' => $body,
         ]);
 
+        try {
+            WebPushService::sendToAll($title, $body, $type);
+        } catch (\Throwable $e) {
+            // Never let push delivery failure break sensor ingestion
+        }
+
         Cache::put($ck, true, self::THROTTLE_SECONDS);
     }
 }

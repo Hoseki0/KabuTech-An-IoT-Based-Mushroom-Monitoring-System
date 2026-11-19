@@ -9,10 +9,15 @@ namespace App\Services;
 final class MushroomSpeciesCatalog
 {
     public const KEYS = [
-        'oyster_mushroom',
-        'straw_mushroom',
-        'milky_mushroom',
-        'wood_ear',
+        'oyster_white',
+        'oyster_brown',
+    ];
+
+    /**
+     * Legacy keys (from older versions) mapped to a current key.
+     */
+    public const LEGACY_ALIASES = [
+        'oyster_mushroom' => 'oyster_white',
     ];
 
     /**
@@ -30,8 +35,8 @@ final class MushroomSpeciesCatalog
     public static function all(): array
     {
         return [
-            'oyster_mushroom' => [
-                'label' => 'Oyster Mushroom',
+            'oyster_white' => [
+                'label' => 'White Oyster Mushroom',
                 // Incubation (spawn run) targets
                 'incubation_temp_min' => 24.0,
                 'incubation_temp_max' => 27.0,
@@ -50,68 +55,45 @@ final class MushroomSpeciesCatalog
                 'harvest_days_min' => 5,
                 'harvest_days_max' => 14,
             ],
-            'straw_mushroom' => [
-                'label' => 'Straw Mushroom',
-                'incubation_temp_min' => 30.0,
-                'incubation_temp_max' => 35.0,
-                'incubation_hum_min' => 70.0,
-                'incubation_hum_max' => 85.0,
-                'temp_min' => 28.0,
-                'temp_max' => 35.0,
-                'hum_min' => 85.0,
-                'hum_max' => 95.0,
-                'incubation_days_min' => 7,
-                'incubation_days_max' => 14,
-                'pin_days_min' => 4,
-                'pin_days_max' => 9,
-                'harvest_days_min' => 7,
-                'harvest_days_max' => 12,
-            ],
-            'milky_mushroom' => [
-                'label' => 'Milky Mushroom',
+            'oyster_brown' => [
+                'label' => 'Brown Oyster Mushroom',
+                // Brown/grey oyster strains tolerate warmer conditions.
                 'incubation_temp_min' => 25.0,
-                'incubation_temp_max' => 32.0,
+                'incubation_temp_max' => 30.0,
                 'incubation_hum_min' => 65.0,
                 'incubation_hum_max' => 80.0,
                 'temp_min' => 22.0,
                 'temp_max' => 30.0,
-                'hum_min' => 80.0,
-                'hum_max' => 92.0,
-                'incubation_days_min' => 10,
-                'incubation_days_max' => 18,
-                'pin_days_min' => 4,
-                'pin_days_max' => 10,
-                'harvest_days_min' => 6,
-                'harvest_days_max' => 14,
-            ],
-            'wood_ear' => [
-                'label' => 'Wood Ear',
-                'incubation_temp_min' => 24.0,
-                'incubation_temp_max' => 30.0,
-                'incubation_hum_min' => 70.0,
-                'incubation_hum_max' => 85.0,
-                'temp_min' => 20.0,
-                'temp_max' => 28.0,
                 'hum_min' => 85.0,
                 'hum_max' => 95.0,
-                'incubation_days_min' => 12,
+                'incubation_days_min' => 14,
                 'incubation_days_max' => 28,
-                'pin_days_min' => 5,
-                'pin_days_max' => 12,
+                'pin_days_min' => 4,
+                'pin_days_max' => 10,
                 'harvest_days_min' => 5,
-                'harvest_days_max' => 10,
+                'harvest_days_max' => 12,
             ],
         ];
     }
 
+    public static function normalizeKey(?string $key): string
+    {
+        $key = (string) $key;
+        $key = self::LEGACY_ALIASES[$key] ?? $key;
+
+        return in_array($key, self::KEYS, true) ? $key : self::defaultKey();
+    }
+
     public static function profile(string $key): ?array
     {
+        $key = self::LEGACY_ALIASES[$key] ?? $key;
+
         return self::all()[$key] ?? null;
     }
 
     public static function defaultKey(): string
     {
-        return 'oyster_mushroom';
+        return 'oyster_white';
     }
 
     public static function isValidKey(string $key): bool

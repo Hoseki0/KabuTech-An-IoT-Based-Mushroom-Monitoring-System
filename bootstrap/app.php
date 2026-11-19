@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Session\TokenMismatchException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -35,7 +36,20 @@ return Application::configure(basePath: dirname(__DIR__))
         // When the CSRF token expires (419), redirect to login gracefully
         // instead of showing the "Page Expired" error page.
         $exceptions->render(function (TokenMismatchException $e, $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Session expired. Please refresh and log in again.'], 419);
+            }
             return redirect()->route('login')
                 ->withErrors(['email' => 'Your session expired. Please log in again.']);
+        });
+
+        $exceptions->render(function (HttpExceptionInterface $e, $request) {
+            if ($e->getStatusCode() === 419) {
+                if ($request->expectsJson()) {
+                    return response()->json(['message' => 'Session expired. Please refresh and log in again.'], 419);
+                }
+                return redirect()->route('login')
+                    ->withErrors(['email' => 'Your session expired. Please log in again.']);
+            }
         });
     })->create();
