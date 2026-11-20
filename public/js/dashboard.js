@@ -993,19 +993,19 @@ function updateHistoryTable(history) {
             ? escapeHtml(item.period_label)
             : (item.recorded_at ? new Date(item.recorded_at).toLocaleString([], dateOpts) : '');
 
-        // Simplified climate status badge
-        let targetStatus = '<span class="badge bg-secondary" style="font-size:0.72rem;">--</span>';
+        // Simplified climate status badge (warm white text for high contrast)
+        let targetStatus = '<span class="badge bg-secondary" style="font-size:0.72rem; color:#faf5eb !important;">--</span>';
         if (tempNum !== null && humNum !== null) {
             if (tempNum >= optTempMin && tempNum <= optTempMax && humNum >= optHumMin && humNum <= optHumMax) {
-                targetStatus = '<span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25" style="font-size:0.72rem;"><i class="fas fa-check-circle me-1"></i>Optimal</span>';
+                targetStatus = '<span class="badge bg-success bg-opacity-25 border border-success border-opacity-25" style="font-size:0.72rem; color:#faf5eb !important;"><i class="fas fa-check-circle me-1"></i>Optimal</span>';
             } else if (tempNum > optTempMax) {
-                targetStatus = `<span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25" style="font-size:0.72rem;">Warm (${temp}°C)</span>`;
+                targetStatus = `<span class="badge bg-danger bg-opacity-25 border border-danger border-opacity-25" style="font-size:0.72rem; color:#faf5eb !important;">Warm (${temp}°C)</span>`;
             } else if (tempNum < optTempMin) {
-                targetStatus = `<span class="badge bg-info bg-opacity-25 text-info border border-info border-opacity-25" style="font-size:0.72rem;">Cool (${temp}°C)</span>`;
+                targetStatus = `<span class="badge bg-info bg-opacity-25 border border-info border-opacity-25" style="font-size:0.72rem; color:#faf5eb !important;">Cool (${temp}°C)</span>`;
             } else if (humNum < optHumMin) {
-                targetStatus = `<span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-25" style="font-size:0.72rem;">Low Hum (${hum}%)</span>`;
+                targetStatus = `<span class="badge bg-warning bg-opacity-25 border border-warning border-opacity-25" style="font-size:0.72rem; color:#faf5eb !important;">Low Hum (${hum}%)</span>`;
             } else {
-                targetStatus = '<span class="badge bg-success bg-opacity-15 text-success" style="font-size:0.72rem;">Normal</span>';
+                targetStatus = '<span class="badge bg-success bg-opacity-15 border border-success border-opacity-25" style="font-size:0.72rem; color:#faf5eb !important;">Normal</span>';
             }
         }
 

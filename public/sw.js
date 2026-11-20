@@ -11,7 +11,7 @@
    Bump CACHE_VERSION whenever you change cached static files.
    ══════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 'v25';
+const CACHE_VERSION = 'v27';
 const STATIC_CACHE  = `kabutech-static-${CACHE_VERSION}`;
 const PAGE_CACHE    = `kabutech-pages-${CACHE_VERSION}`;
 const API_CACHE     = `kabutech-api-${CACHE_VERSION}`;

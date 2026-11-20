@@ -1097,8 +1097,8 @@
                     <div class="row g-4">
                         <div class="col-md-6">
                             <div class="p-3 border border-secondary rounded glass-card h-100">
-                                <h6 class="fw-bold mb-2"><i class="fas fa-database me-2 text-info"></i>Sensor Telemetry Export (CSV)</h6>
-                                <p class="small text-muted mb-3">Download raw temperature, humidity, misting pump activations, and RSSI signal logs.</p>
+                                <h6 class="fw-bold mb-2"><i class="fas fa-database me-2 text-info"></i>Sensor Telemetry Report (PDF / Excel / CSV)</h6>
+                                <p class="small text-muted mb-3">Download temperature, humidity, misting pump, and fan logs as PDF, Excel (.xlsx), or CSV.</p>
                                 <form id="exportSensorDataForm" method="GET" action="<?php echo e($base); ?>/api/export/sensor-data" target="_blank">
                                     <div class="row g-2 mb-3">
                                         <div class="col-6">
@@ -1119,14 +1119,24 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <button type="submit" class="btn btn-sm btn-primary w-100"><i class="fas fa-download me-1"></i> Download Sensor CSV</button>
+                                    <div class="row g-2">
+                                        <div class="col-4">
+                                            <button type="submit" formaction="<?php echo e($base); ?>/api/export/sensor-data/pdf" class="btn btn-sm btn-danger w-100"><i class="fas fa-file-pdf me-1"></i>PDF</button>
+                                        </div>
+                                        <div class="col-4">
+                                            <button type="submit" formaction="<?php echo e($base); ?>/api/export/sensor-data/excel" class="btn btn-sm btn-success w-100"><i class="fas fa-file-excel me-1"></i>Excel</button>
+                                        </div>
+                                        <div class="col-4">
+                                            <button type="submit" formaction="<?php echo e($base); ?>/api/export/sensor-data" class="btn btn-sm btn-primary w-100"><i class="fas fa-file-csv me-1"></i>CSV</button>
+                                        </div>
+                                    </div>
                                 </form>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="p-3 border border-secondary rounded glass-card h-100">
-                                <h6 class="fw-bold mb-2"><i class="fas fa-wheat-awn me-2 text-success"></i>Harvest Yield Logs Export (CSV)</h6>
-                                <p class="small text-muted mb-3">Download recorded mushroom harvest weights, flush counts, substrate weights, and Biological Efficiency (BE%).</p>
+                                <h6 class="fw-bold mb-2"><i class="fas fa-wheat-awn me-2 text-success"></i>Harvest Yield Report (PDF / Excel / CSV)</h6>
+                                <p class="small text-muted mb-3">Download mushroom harvest weights, flush counts, substrate weights, and BE% as PDF, Excel (.xlsx), or CSV.</p>
                                 <form id="exportHarvestLogsForm" method="GET" action="<?php echo e($base); ?>/api/export/harvest-logs" target="_blank">
                                     <div class="row g-2 mb-3">
                                         <div class="col-6">
@@ -1138,7 +1148,17 @@
                                             <input type="date" name="end_date" class="form-control form-control-sm">
                                         </div>
                                     </div>
-                                    <button type="submit" class="btn btn-sm btn-success w-100"><i class="fas fa-download me-1"></i> Download Harvest CSV</button>
+                                    <div class="row g-2">
+                                        <div class="col-4">
+                                            <button type="submit" formaction="<?php echo e($base); ?>/api/export/harvest-logs/pdf" class="btn btn-sm btn-danger w-100"><i class="fas fa-file-pdf me-1"></i>PDF</button>
+                                        </div>
+                                        <div class="col-4">
+                                            <button type="submit" formaction="<?php echo e($base); ?>/api/export/harvest-logs/excel" class="btn btn-sm btn-success w-100"><i class="fas fa-file-excel me-1"></i>Excel</button>
+                                        </div>
+                                        <div class="col-4">
+                                            <button type="submit" formaction="<?php echo e($base); ?>/api/export/harvest-logs" class="btn btn-sm btn-primary w-100"><i class="fas fa-file-csv me-1"></i>CSV</button>
+                                        </div>
+                                    </div>
                                 </form>
                             </div>
                         </div>

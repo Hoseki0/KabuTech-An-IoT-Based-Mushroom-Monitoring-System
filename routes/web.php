@@ -53,10 +53,14 @@ Route::middleware('auth.any')->group(function () {
     Route::post('/api/harvest-logs',       [HarvestController::class, 'store']);
     Route::delete('/api/harvest-logs/{id}', [HarvestController::class, 'destroy'])->whereNumber('id');
 
-    // Data & CSV Export API
-    Route::get('/api/export/sensor-data',     [ExportController::class, 'exportSensorData']);
-    Route::get('/api/export/harvest-logs',    [ExportController::class, 'exportHarvestLogs']);
-    Route::get('/api/analytics/correlation',   [ExportController::class, 'getCorrelationAnalytics']);
+    // Data, PDF, Excel & CSV Export API
+    Route::get('/api/export/sensor-data',       [ExportController::class, 'exportSensorData']);
+    Route::get('/api/export/sensor-data/excel', [ExportController::class, 'exportSensorExcel']);
+    Route::get('/api/export/sensor-data/pdf',   [ExportController::class, 'exportSensorPdf']);
+    Route::get('/api/export/harvest-logs',      [ExportController::class, 'exportHarvestLogs']);
+    Route::get('/api/export/harvest-logs/excel',[ExportController::class, 'exportHarvestExcel']);
+    Route::get('/api/export/harvest-logs/pdf',  [ExportController::class, 'exportHarvestPdf']);
+    Route::get('/api/analytics/correlation',    [ExportController::class, 'getCorrelationAnalytics']);
 
     // Substrate Batches Lifecycle API
     Route::get('/api/batches',                [BatchController::class, 'index']);
